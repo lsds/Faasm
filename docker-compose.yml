@@ -77,9 +77,9 @@ services:
       - REDIS_STATE_HOST=redis-state
       - LD_LIBRARY_PATH=/build/faasm/third-party/lib:/usr/local/lib
     volumes:
-      - .:/usr/local/code/faasm/
-      - ./build/:/build/faasm/
-      - ./container/machine-code/:/usr/local/faasm/object/
-      - ./container/shared_store/:/usr/local/faasm/shared_store/
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
+      - .:/usr/local/code/faasm/
+      - ./build/:/build/faasm/
+      - /home/scs17/faasm-local:/usr/local/faasm
+
