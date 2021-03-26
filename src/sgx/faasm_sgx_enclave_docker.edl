@@ -1,0 +1,11 @@
+enclave{
+    include "/usr/local/code/faasm/include/sgx/faasm_sgx_error.h"
+    include "/usr/local/code/faasm/include/sgx/faasm_sgx_attestation.h"
+    include "/usr/local/code/faasm/build/_deps/wamr_ext-src/core/iwasm/include/wasm_export.h"
+    include "sgx_key_exchange.h"
+
+    from "sgx_tstdc.edl" import *;
+    from "sgx_pthread.edl" import *;
+    from "faasm_sgx_enclave_interface.edl" import *;
+    from "sgx_tkey_exchange.edl" import *;
+};

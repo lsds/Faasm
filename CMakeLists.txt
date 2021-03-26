@@ -14,9 +14,8 @@ option(WAMR_INTERPRETER_MODE "Turns interpreter on / off (vs. AoT)" OFF)
 # SGX functionality
 # These options customise the SGX features _provided_ SGX is found
 option(FAASM_SGX_SIM_MODE "Turn on SGX sim mode" ON)
-option(FAASM_SGX_ATTESTATION "Turn on attestation" OFF)
 option(FAASM_SGX_XRA "Turn on support for XRA" OFF)
-option(FAASM_SGX_WAMR_AOT_MODE "Turn on AoT mode in SGX" ON)
+option(FAASM_SGX_WAMR_AOT_MODE "Turn on AoT mode in SGX" OFF)
 
 # Note - whitelisting currently not working in WAMR AoT mode
 option(FAASM_SGX_WHITELISTING "Add support for whitelisting" OFF) 
@@ -44,7 +43,6 @@ find_package(cpprestsdk REQUIRED)
 # Detect SGX
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(SGX)
-set(SGX_FOUND 0)
 
 # SGX configuration
 if (SGX_FOUND)
@@ -64,12 +62,6 @@ if (SGX_FOUND)
 	    add_definitions(-DSGX_SIM_MODE=0)
         # Must link protobuf statically because SGX LE probably uses an older version
         set(Protobuf_USE_STATIC_LIBS 1)
-    endif()
-
-    if(FAASM_SGX_ATTESTATION)
-        add_definitions(-DFAASM_SGX_ATTESTATION=1)
-    else()
-        add_definitions(-DFAASM_SGX_ATTESTATION=0)
     endif()
 
     if(FAASM_SGX_WHITELISTING AND FAASM_SGX_WAMR_AOT_MODE)

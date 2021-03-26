@@ -16,6 +16,13 @@ set(FAASM_SGX_ENCLAVE_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/faasm_sgx_enclave.
 set(FAASM_SGX_WAMR_BUILDIN_LIBC 1)
 set(FAASM_SGX_WAMR_WASI_LIBC 0)
 
+
+if($ENV{FAASM_DOCKER})
+	set(FAASM_SGX_EDL "faasm_sgx_enclave_docker.edl")
+else()
+	set(FAASM_SGX_EDL "faasm_sgx_enclave_nodocker.edl")
+endif()
+
 # Enable(1)/ Disable(0) SGX-specific debug/error messages 
 # Disable for better performance
 set(FAASM_SGX_DEBUG 1) 
@@ -83,14 +90,12 @@ set(FAASM_SGX_WAMR_SRC_UNTRUSTED
         )
 
 # Attestation configuration
-if (FAASM_SGX_ATTESTATION)
-    # IP-address or hostname is possible to specify host
-    add_definitions(
-            -DFAASM_SGX_ATTESTATION_HOST="localhost" 
-            -DFAASM_SGX_ATTESTATION_PORT=8009
-            -DFAASM_SGX_ATTESTATION_CALLBACK_STORE_INIT_LEN=4
-    )
-endif ()
+# IP-address or hostname is possible to specify host
+add_definitions(
+		-DFAASM_SGX_ATTESTATION_HOST="localhost"
+		-DFAASM_SGX_ATTESTATION_PORT=8009
+		-DFAASM_SGX_ATTESTATION_CALLBACK_STORE_INIT_LEN=4
+)
 
 # eXtended Remote Attestation XRA configuration
 if(FAASM_SGX_XRA)
@@ -121,7 +126,6 @@ message("-- Faasm-SGX Configuration:
  FAASM-SGX WAMR AoT Mode: ${FAASM_SGX_WAMR_AOT_MODE}
  FAASM-SGX WAMR Buildin Libc: ${FAASM_SGX_WAMR_BUILDIN_LIBC}
  FAASM-SGX WAMR Wasi Libc: ${FAASM_SGX_WAMR_WASI_LIBC}
- FAASM-SGX ATTESTATION: ${FAASM_SGX_ATTESTATION}
  FAASM-SGX WHITELISTING: ${FAASM_SGX_WHITELISTING}
  FAASM-SGX XRA: ${FAASM_SGX_XRA}
  FAASM_SGX Enclave Path: ${FAASM_SGX_ENCLAVE_PATH}
@@ -193,8 +197,10 @@ include_directories(/usr/local/faasm/native/include)
 set(FAASM_SGX_ENCLAVE_SRC
         faasm_sgx_enclave.cpp
         faasm_sgx_native_symbols_wrapper.cpp
+        faasm_sgx_util.cpp
         rw_lock.cpp
         )
+
 
 if (FAASM_SGX_WHITELISTING)
     set(FAASM_SGX_ENCLAVE_SRC ${FAASM_SGX_ENCLAVE_SRC} faasm_sgx_whitelisting.cpp)
@@ -245,6 +251,7 @@ if (FAASM_SGX_SIM_MODE)
             -Wl,--no-whole-archive
             -Wl,--start-group
             sgx_tservice_sim
+            sgx_tkey_exchange
             -Wl,--end-group
             )
 else ()
@@ -253,6 +260,7 @@ else ()
             -Wl,--no-whole-archive
             -Wl,--start-group
             sgx_tservice
+            sgx_tkey_exchange
             -Wl,--end-group
             )
 endif ()
@@ -299,12 +307,11 @@ set(FAASM_SGX_SRC
         faasm_sgx_native_symbols.cpp
         )
 
-if (FAASM_SGX_ATTESTATION)
-    set(FAASM_SGX_SRC ${FAASM_SGX_SRC}
-            faasm_sgx_attestation.cpp
-            rw_lock.cpp
-            )
-endif ()
+set(FAASM_SGX_SRC ${FAASM_SGX_SRC}
+		faasm_sgx_attestation.cpp
+		rw_lock.cpp
+		base64.cpp
+		)
 
 
 add_library(faasm_sgx STATIC
@@ -313,10 +320,6 @@ add_library(faasm_sgx STATIC
         )
 
 add_dependencies(faasm_sgx faasm_sgx_enclave wamr_sgx_untrusted wasm)
-
-if(FAASM_SGX_ATTESTATION)
-    add_dependencies(faasm_sgx demo_keymgr)
-endif()
 
 target_include_directories(faasm_sgx PUBLIC ${SGX_SDK_PATH}/include)
 
@@ -350,11 +353,13 @@ if (FAASM_SGX_SIM_MODE)
     target_link_libraries(faasm_sgx
             sgx_urts_sim
             sgx_uae_service_sim
+            sgx_ukey_exchange
             )
 else ()
     target_link_libraries(faasm_sgx
             sgx_urts
             sgx_uae_service
+            sgx_ukey_exchange
             )
 endif ()
 
@@ -399,29 +404,21 @@ target_compile_options(wamr_sgx_untrusted PRIVATE
         )
 
 # --------------------------------------------------------
-# DEMO KEY MANAGER
-# --------------------------------------------------------
-if(FAASM_SGX_ATTESTATION)
-    add_executable(demo_keymgr demo_keymgr.c)
-
-    target_include_directories(demo_keymgr PRIVATE ${SGX_SDK_PATH}/include)
-    target_link_options(demo_keymgr PRIVATE -pthread)
-    target_compile_options(demo_keymgr PRIVATE
-            -O3
-            -fpic
-            -fpie
-            -DDEMO_KEYMGR=1
-            )
-endif()
-
-# --------------------------------------------------------
 # CUSTOM COMMANDS
 # --------------------------------------------------------
 
 # WAMR enclave
+
+# copy edl to same name to get same file names
+add_custom_command(TARGET faasm_sgx_enclave
+        PRE_BUILD COMMAND cp -f
+        ${FAASM_SOURCE_DIR}/sgx/${FAASM_SGX_EDL}
+        ${FAASM_SOURCE_DIR}/sgx/faasm_sgx_enclave.edl
+        )
+
 add_custom_command(TARGET faasm_sgx_enclave
         PRE_BUILD COMMAND ${SGX_SDK_ENCLAVE_EDGER8R}
-        --trusted faasm_sgx_enclave.edl
+        --trusted --untrusted faasm_sgx_enclave.edl
         --search-path ${FAASM_SOURCE_DIR}/sgx
         --search-path ${SGX_SDK_PATH}/include
         --search-path ${WAMR_SHARED_DIR}/platform/linux-sgx/
@@ -437,6 +434,14 @@ add_custom_command(TARGET faasm_sgx_enclave
         )
 
 add_custom_command(TARGET faasm_sgx_enclave
+        PRE_BUILD COMMAND gcc
+        ${FAASM_SGX_C_FLAGS}
+        -I${SGX_SDK_PATH}/include
+        -c faasm_sgx_enclave_u.c
+        -o faasm_sgx_enclave_u.o
+        )
+
+add_custom_command(TARGET faasm_sgx_enclave
         POST_BUILD COMMAND
         ${SGX_SDK_ENCLAVE_SIGNER} sign
         -key ${CMAKE_CURRENT_SOURCE_DIR}/faasm_sgx_enclave.pem
@@ -445,19 +450,3 @@ add_custom_command(TARGET faasm_sgx_enclave
         -config ${CMAKE_CURRENT_SOURCE_DIR}/faasm_sgx_enclave.config
         )
 
-# SGX-WAMR
-add_custom_command(TARGET faasm_sgx
-        PRE_BUILD COMMAND ${SGX_SDK_ENCLAVE_EDGER8R}
-        --untrusted faasm_sgx_enclave.edl
-        --search-path ${FAASM_SOURCE_DIR}/sgx
-        --search-path ${SGX_SDK_PATH}/include
-        --search-path ${WAMR_SHARED_DIR}/platform/linux-sgx/
-        )
-
-add_custom_command(TARGET faasm_sgx
-        PRE_BUILD COMMAND gcc
-        ${FAASM_SGX_C_FLAGS}
-        -I${SGX_SDK_PATH}/include
-        -c faasm_sgx_enclave_u.c
-        -o faasm_sgx_enclave_u.o
-        )

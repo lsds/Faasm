@@ -169,8 +169,13 @@ int WAMRWasmModule::executeFunctionFromPointer(int wasmFuncPtr)
 
     // Handle errors
     if (!success) {
+#if (WAMR_EXECUTION_MODE_INTERP)
+        std::string errorMessage(
+          ((WASMModuleInstance*)moduleInstance)->cur_exception);
+#else
         std::string errorMessage(
           ((AOTModuleInstance*)moduleInstance)->cur_exception);
+#endif
 
         logger->error("Failed to execute from function pointer {}",
                       wasmFuncPtr);

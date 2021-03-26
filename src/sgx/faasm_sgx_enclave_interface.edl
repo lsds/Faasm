@@ -1,42 +1,22 @@
-// Annoyingly we have to redefine these here
-#define FAASM_SGX 1
-#define FAASM_SGX_ATTESTATION 0
-#define FAASM_SGX_WAMR_WASI_LIBC 0
-#define FAASM_DOCKER 1
-
 enclave{
-#if(FAASM_DOCKER)
-    include "/usr/local/code/faasm/include/sgx/faasm_sgx_error.h"
-    include "/usr/local/code/faasm/include/sgx/faasm_sgx_attestation.h"
-    include "/build/faasm/_deps/wamr_ext-src/core/iwasm/include/wasm_export.h"
-#else
-    include "../../../include/sgx/faasm_sgx_error.h"
-    include "../../../include/sgx/faasm_sgx_attestation.h"
-    include "../../_deps/wamr_ext-src/core/iwasm/include/wasm_export.h"
-#endif
-    from "sgx_tstdc.edl" import *;
-    from "sgx_pthread.edl" import *;
-#if(FAASM_SGX_WAMR_WASI_LIBC)
-    from "sgx_wamr.edl" import *;
-#endif
+    from "sgx_tkey_exchange.edl" import *;
 
     trusted{
         public faasm_sgx_status_t faasm_sgx_enclave_unload_module(uint32_t thread_id);
-        public faasm_sgx_status_t faasm_sgx_enclave_call_function(uint32_t thread_id, uint32_t func_id);
-#if(FAASM_SGX_ATTESTATION)
-        public faasm_sgx_status_t faasm_sgx_enclave_load_module([user_check] const void *wasm_opcode_ptr, uint32_t wasm_opcode_size, [out] uint32_t *thread_id, [user_check] sgx_wamr_msg_t **response_ptr);
-#else
-        public faasm_sgx_status_t faasm_sgx_enclave_load_module([user_check] const void *wasm_opcode_ptr, uint32_t wasm_opcode_size, [out] uint32_t *thread_id);
-#endif
+        public faasm_sgx_status_t faasm_sgx_enclave_call_function(uint32_t thread_id, uint32_t func_id, [in, string] const char* sid, [in, size=payload_len] const sgx_wamr_encrypted_data_blob_t* payload, uint32_t payload_len, [in, size=policy_len] const void* policy, uint32_t policy_len);
+        public faasm_sgx_status_t faasm_sgx_enclave_load_module([in, string] const char* user, [in, string] const char* function, [user_check] const void* wasm_opcode_ptr, uint32_t wasm_opcode_size, [in, size=12] const void* wasm_op_nonce, [in, size=16] const void* wasm_op_tag, [out] uint32_t* thread_id, [user_check] sgx_wamr_msg_t** response_ptr, [user_check] faaslet_sgx_gp_buffer_t* output_ptr, [user_check] faaslet_sgx_gp_buffer_t* result_ptr);
         public faasm_sgx_status_t faasm_sgx_enclave_init_wamr(void);
+        public faasm_sgx_status_t faasm_sgx_enclave_init_ra([user_check] sgx_ra_context_t *ctx);
+        public faasm_sgx_status_t faasm_sgx_enclave_finalize_key_exchange([in, size=res_msg_size] sgx_wamr_msg_t* res_msg, uint32_t res_msg_size);
     };
 
     untrusted{
         void ocall_printf([in, string] const char* msg);
-#if(FAASM_SGX_ATTESTATION)
         faasm_sgx_status_t ocall_init_crt(void);
         faasm_sgx_status_t ocall_send_msg([in, size=msg_len]sgx_wamr_msg_t* msg, uint32_t msg_len);
-#endif
+        faasm_sgx_status_t ocall_attest_to_km(void)
+            allow(faasm_sgx_enclave_init_ra, sgx_ra_get_ga, sgx_ra_proc_msg2_trusted, sgx_ra_get_msg3_trusted,faasm_sgx_enclave_finalize_key_exchange);
+        faasm_sgx_status_t ocall_set_result([in, size=msg_len] uint8_t* msg, uint32_t msg_len);
         uint64_t ocall_faasm_read_state([in, string] char* key, [out, size=buffer_len] uint8_t* buffer_ptr, uint32_t buffer_len);
         void ocall_faasm_read_appended_state([in, string] char* key, [out, size=buffer_len] uint8_t* buffer_ptr, uint32_t buffer_len, uint32_t element_num);
         void ocall_faasm_read_state_offset([in, string] char* key, uint64_t total_len, uint64_t offset, [out, size=buffer_len] uint8_t* buffer_ptr, uint32_t buffer_len);
@@ -58,9 +38,11 @@ enclave{
         void ocall_faasm_unlock_state_write([in, string] char* key);
         int ocall_faasm_read_input([in, out, size=buffer_size] uint8_t* buffer, unsigned int buffer_size);
         void ocall_faasm_write_output([in, size=output_size] uint8_t* output, unsigned int output_size);
-        unsigned int ocall_faasm_chain_name([in, string] const char* name, [in, size=input_size] uint8_t* input, long input_size);
-        unsigned int ocall_faasm_chain_ptr(int wasmFuncPtr, [in, size=input_size] uint8_t* input, long input_size);
+        unsigned int ocall_faasm_chain_name([in, string] const char* name, [in, size=input_size] uint8_t* input, long input_size, [in, size=policy_len] uint8_t *policy, uint32_t policy_len);
+        unsigned int ocall_faasm_chain_ptr(int idx, [in, size=input_size] uint8_t* input, long input_size, [in, size=policy_len] uint8_t *policy, uint32_t policy_len);
+        unsigned int ocall_faasm_await_call_output(unsigned int call_id); //different buffer handling in SGX mode
+        void ocall_faasm_lock_state_write2([in, string] char* key, uint32_t len);
+        void ocall_faasm_unlock_state_write2([in, string] char* key, uint32_t len);
         unsigned int ocall_faasm_await_call(unsigned int call_id);
-        unsigned int ocall_faasm_await_call_output(unsigned int call_id, [out, size=buffer_size] uint8_t* buffer, unsigned int buffer_size);
     };
 };

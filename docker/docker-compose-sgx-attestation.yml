@@ -1,0 +1,47 @@
+version: "3.6"
+# cli and worker (pool_runner) not containerized!
+
+services:
+  mongo:
+    image: mongo:latest
+    expose:
+        - "27017"
+
+  keymanager:
+    build:
+      context: .
+      dockerfile: docker/keymanager.dockerfile
+    ports:
+        - "8009:8009" #guard port
+        - "5000:5000" #registry port
+    depends_on:
+       - mongo
+    environment:
+        - KM_HOST=keymanager
+        - DEFAULT_MONGO_HOST=mongo
+
+  redis-state:
+    image: faasm/redis:${FAASM_VERSION}
+
+  redis-queue:
+    image: faasm/redis:${FAASM_VERSION}
+
+  upload:
+    image: faasm/upload:${FAASM_VERSION}
+    ports:
+      - "8002:8002"
+    depends_on:
+      - redis-queue
+      - redis-state
+    volumes:
+      - ./build/:${FAASM_BUILD_MOUNT}/
+      - ./wasm/:/usr/local/code/faasm/wasm/
+      - ./container/machine-code/:/usr/local/faasm/object/
+      - ./container/shared_store/:/usr/local/faasm/shared_store/
+    environment:
+      - FUNCTION_STORAGE=local
+      - LOG_LEVEL=info
+      - PYTHON_CODEGEN=off
+      - REDIS_QUEUE_HOST=redis-queue
+      - REDIS_STATE_HOST=redis-state
+      - LD_LIBRARY_PATH=/build/faasm/third-party/lib:/usr/local/lib

@@ -131,6 +131,7 @@ void Faaslet::preFinishCall(faabric::Message& call,
 
 void Faaslet::postBind(const faabric::Message& msg, bool force)
 {
+    const std::shared_ptr<spdlog::logger>& logger = faabric::util::getLogger();
     faabric::util::SystemConfig& conf = faabric::util::getSystemConfig();
 
     // Instantiate the right wasm module for the chosen runtime
@@ -138,8 +139,10 @@ void Faaslet::postBind(const faabric::Message& msg, bool force)
 #if (FAASM_SGX)
         // When SGX is enabled, we may still be running with vanilla WAMR
         if (msg.issgx()) {
+            logger->debug("instantiating SGXWAMRWasmModule");
             module = std::make_unique<wasm::SGXWAMRWasmModule>();
         } else {
+            logger->debug("instantiating WAMRWasmModule");
             module = std::make_unique<wasm::WAMRWasmModule>();
         }
 #else
@@ -149,6 +152,9 @@ void Faaslet::postBind(const faabric::Message& msg, bool force)
 
         module->bindToFunction(msg);
     } else if (conf.wasmVm == "wavm") {
+#if (FAASM_SGX)
+        logger->warn("no SGX support for WAVM. continuing without SGX.");
+#endif
         PROF_START(snapshotRestore)
 
         // Load snapshot from cache

@@ -26,14 +26,16 @@ extern "C"
     extern sgx_status_t faasm_sgx_enclave_load_module(
       sgx_enclave_id_t enclave_id,
       faasm_sgx_status_t* ret_val,
+      const char* user,
+      const char* function,
       const void* wasm_opcode_ptr,
       const uint32_t wasm_opcode_size,
-      uint32_t* thread_id
-#if (FAASM_SGX_ATTESTATION)
-      ,
-      sgx_wamr_msg_t** response_ptr
-#endif
-    );
+      const void* wasm_op_nonce,
+      const void* wasm_op_mac,
+      uint32_t* thread_id,
+      sgx_wamr_msg_t** response_ptr,
+      faaslet_sgx_gp_buffer_t* output_ptr,
+      faaslet_sgx_gp_buffer_t* result_ptr);
 
     extern sgx_status_t faasm_sgx_enclave_unload_module(
       sgx_enclave_id_t enclave_id,
@@ -44,7 +46,12 @@ extern "C"
       sgx_enclave_id_t enclave_id,
       faasm_sgx_status_t* ret_val,
       const uint32_t thread_id,
-      const uint32_t func_id);
+      const uint32_t func_id,
+      const char* sid,
+      const sgx_wamr_encrypted_data_blob_t* payload,
+      uint32_t payload_len,
+      const void* policy,
+      uint32_t policy_len);
 }
 
 namespace wasm {

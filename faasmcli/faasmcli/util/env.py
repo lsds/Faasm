@@ -55,6 +55,10 @@ PY_RUNTIME_ROOT = join(FAASM_RUNTIME_ROOT, "lib", "python3.8")
 
 LATEST_CMAKE = "/usr/local/lib/cmake-3.15/bin/cmake"
 
+KEY_MANAGER_REGISTRY_IP = environ.get("KM_REGISTRY_HOST", "localhost")
+KEY_MANAGER_REGISTRY_PORT = 5000
+WASM_OPT_BIN = "wasm-opt"
+
 
 def get_wasm_func_path(user, func_name):
     func_dir = join(WASM_DIR, user, func_name)

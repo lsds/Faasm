@@ -16,6 +16,7 @@ from . import run
 from . import state
 from . import upload
 from . import wast
+from . import policy
 
 # Default names
 ns = Collection(
@@ -32,6 +33,7 @@ ns = Collection(
     state,
     upload,
     wast,
+    policy,
 )
 
 # Custom names

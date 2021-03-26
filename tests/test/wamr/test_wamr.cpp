@@ -29,4 +29,9 @@ TEST_CASE("Test executing chain function with WAMR", "[wamr]")
 {
     executeWithWamrPool("demo", "chain");
 }
+
+TEST_CASE("Test executing chain-by-name function with WAMR", "[wamr]")
+{
+    executeWithWamrPool("demo", "chain_named_a");
+}
 }

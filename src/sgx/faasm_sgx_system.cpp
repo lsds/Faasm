@@ -5,10 +5,19 @@
 
 #include <boost/filesystem/operations.hpp>
 #include <sgx/SGXWAMRWasmModule.h>
+#include <sgx_ukey_exchange.h>
 #include <sgx_urts.h>
 
 // Global enclave ID
 sgx_enclave_id_t globalEnclaveId;
+faaslet_sgx_msg_buffer_t sgx_wamr_msg_response;
+faaslet_sgx_gp_buffer_t sgx_wamr_attestation_output,
+  sgx_wamr_attestation_result;
+
+// buffer pointers
+__thread faaslet_sgx_msg_buffer_t* faaslet_sgx_msg_buffer_ptr;
+__thread faaslet_sgx_gp_buffer_t *faaslet_sgx_attestation_output_ptr,
+  *faaslet_sgx_attestation_result_ptr;
 
 #define ERROR_PRINT_CASE(enumVal)                                              \
     case (enumVal): {                                                          \
@@ -21,6 +30,26 @@ void checkSgxSetup()
 {
     auto logger = faabric::util::getLogger();
 
+    // Allocate buffers
+    sgx_wamr_msg_response.buffer_len =
+      (sizeof(sgx_wamr_msg_t) + sizeof(sgx_wamr_msg_hdr_t));
+    if (!(sgx_wamr_msg_response.buffer_ptr = (sgx_wamr_msg_t*)calloc(
+            sgx_wamr_msg_response.buffer_len, sizeof(uint8_t)))) {
+        // TODO: Error handling
+    }
+    if (!(sgx_wamr_attestation_output.buffer_ptr = calloc(
+            FAASM_SGX_ATTESTATION_GP_BUFFER_DEFAULT_SIZE, sizeof(uint8_t))) ||
+        !(sgx_wamr_attestation_result.buffer_ptr = calloc(
+            FAASM_SGX_ATTESTATION_GP_BUFFER_DEFAULT_SIZE, sizeof(uint8_t)))) {
+        // TODO: Error Handling
+    }
+    sgx_wamr_attestation_output.buffer_len =
+      sgx_wamr_attestation_result.buffer_len =
+        FAASM_SGX_ATTESTATION_GP_BUFFER_DEFAULT_SIZE;
+    faaslet_sgx_msg_buffer_ptr = &sgx_wamr_msg_response;
+    faaslet_sgx_attestation_output_ptr = &sgx_wamr_attestation_output;
+    faaslet_sgx_attestation_result_ptr = &sgx_wamr_attestation_result;
+
     // Skip set-up if enclave already exists
     if (globalEnclaveId > 0) {
         logger->debug("SGX enclave already exists ({})", globalEnclaveId);
@@ -32,9 +61,19 @@ void checkSgxSetup()
 #if (!SGX_SIM_MODE)
     returnValue = faasm_sgx_get_sgx_support();
     if (returnValue != FAASM_SGX_SUCCESS) {
-        logger->error("Machine doesn't support SGX {}",
-                      faasmSgxErrorString(returnValue));
-        throw std::runtime_error("Machine doesn't support SGX");
+#if (FAASM_SGX_WAMR_AOT_MODE)
+        if (returnValue == FAASM_SGX_CPU_SGX_V2_LEAF_NOT_AVAILABLE) {
+            logger->error("Machine doesn't support SGXv2 {}",
+                          faasmSgxErrorString(returnValue));
+            throw std::runtime_error("Machine doesn't support SGXv2");
+        }
+#else
+        if (returnValue == FAASM_SGX_CPU_SGX_V1_LEAF_NOT_AVAILABLE) {
+            logger->error("Machine doesn't support SGXv1 {}",
+                          faasmSgxErrorString(returnValue));
+            throw std::runtime_error("Machine doesn't support SGXv1");
+        }
+#endif
     }
 #endif
 
@@ -90,8 +129,13 @@ void checkSgxSetup()
 void tearDownEnclave()
 {
     auto logger = faabric::util::getLogger();
-    logger->debug("Destroying enclave {}", globalEnclaveId);
 
+    // Free buffers
+    free(sgx_wamr_msg_response.buffer_ptr);
+    free(sgx_wamr_attestation_result.buffer_ptr);
+    free(sgx_wamr_attestation_output.buffer_ptr);
+
+    logger->debug("Destroying enclave {}", globalEnclaveId);
     sgx_status_t sgxReturnValue = sgx_destroy_enclave(globalEnclaveId);
     if (sgxReturnValue != SGX_SUCCESS) {
         logger->warn("Unable to destroy enclave {}: {}",
@@ -162,7 +206,9 @@ std::string faasmSgxErrorString(faasm_sgx_status_t status)
         ERROR_PRINT_CASE(FAASM_SGX_MODULE_NOT_LOADED)
         ERROR_PRINT_CASE(FAASM_SGX_INVALID_FUNC_ID)
         ERROR_PRINT_CASE(FAASM_SGX_INVALID_OPCODE_SIZE)
+        ERROR_PRINT_CASE(FAASM_SGX_ECALL_FAILED)
         ERROR_PRINT_CASE(FAASM_SGX_OCALL_FAILED)
+        ERROR_PRINT_CASE(FAASM_SGX_SDK_CALL_FAILED)
         ERROR_PRINT_CASE(FAASM_SGX_CRT_THREAD_FAILED)
         ERROR_PRINT_CASE(FAASM_SGX_CRT_SOCKET_FAILED)
         ERROR_PRINT_CASE(FAASM_SGX_CRT_INVALID_ADDR)

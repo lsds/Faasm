@@ -19,6 +19,9 @@ class FileLoader
     virtual std::vector<uint8_t> loadFunctionWasm(
       const faabric::Message& msg) = 0;
 
+    virtual std::vector<uint8_t> loadEncryptedFunctionWasm(
+      const faabric::Message& msg) = 0;
+
     virtual std::vector<uint8_t> loadSharedObjectWasm(
       const std::string& path) = 0;
 

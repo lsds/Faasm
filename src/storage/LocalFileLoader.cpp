@@ -17,6 +17,13 @@ std::vector<uint8_t> LocalFileLoader::loadFunctionWasm(
     return loadFileBytes(filePath);
 }
 
+std::vector<uint8_t> LocalFileLoader::loadEncryptedFunctionWasm(
+  const faabric::Message& msg)
+{
+    std::string filePath = faabric::util::getEncryptedFunctionFile(msg);
+    return loadFileBytes(filePath);
+}
+
 std::vector<uint8_t> LocalFileLoader::loadFunctionObjectFile(
   const faabric::Message& msg)
 {

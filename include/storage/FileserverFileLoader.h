@@ -19,6 +19,9 @@ class FileserverFileLoader : public FileLoader
 
     std::vector<uint8_t> loadFunctionWasm(const faabric::Message& msg) override;
 
+    std::vector<uint8_t> loadEncryptedFunctionWasm(
+      const faabric::Message& msg) override;
+
     std::vector<uint8_t> loadSharedObjectWasm(const std::string& path) override;
 
     std::vector<uint8_t> loadFunctionObjectFile(

@@ -41,7 +41,7 @@ std::vector<uint8_t> FileLoader::doCodegen(std::vector<uint8_t>& bytes,
 {
     faabric::util::SystemConfig& conf = faabric::util::getSystemConfig();
     if (conf.wasmVm == "wamr") {
-#if (WAMR_EXECTION_MODE_INTERP)
+#if (WAMR_EXECUTION_MODE_INTERP)
         throw std::runtime_error(
           "WAMR codegen not supported with WAMR interp mode");
 #else

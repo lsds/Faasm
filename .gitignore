@@ -133,3 +133,6 @@ venv/
 
 # Benchmark outputs
 *.ppm
+
+# generated EDL file
+src/sgx/faasm_sgx_enclave.edl

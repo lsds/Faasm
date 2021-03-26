@@ -1,12 +1,11 @@
 #pragma once
 
-#include <faasm/host_interface.h>
 #include <iwasm/include/wasm_export.h>
 #include <sgx.h>
 #include <sgx_defs.h>
 
 // Length of used native symbols
-#define FAASM_SGX_NATIVE_SYMBOLS_LEN 26
+#define FAASM_SGX_NATIVE_SYMBOLS_LEN 25
 #define FAASM_SGX_WASI_SYMBOLS_LEN 6
 
 extern "C"
@@ -88,13 +87,21 @@ extern "C"
 
     extern sgx_status_t SGX_CDECL ocall_faasm_lock_state_write(const char* key);
 
+    extern sgx_status_t SGX_CDECL ocall_faasm_lock_state_write2(const char* key,
+                                                                uint32_t len);
+
     extern sgx_status_t SGX_CDECL
     ocall_faasm_unlock_state_write(const char* key);
 
     extern sgx_status_t SGX_CDECL
+    ocall_faasm_unlock_state_write2(const char* key, uint32_t len);
+
+    extern sgx_status_t SGX_CDECL
     ocall_faasm_read_input(int* returnValue,
                            uint8_t* buffer,
-                           unsigned int buffer_size);
+                           unsigned int buffer_size,
+                           uint8_t* nonce,
+                           uint8_t* mac);
 
     extern sgx_status_t SGX_CDECL
     ocall_faasm_write_output(uint8_t* output, unsigned int output_size);
@@ -103,22 +110,24 @@ extern "C"
     ocall_faasm_chain_name(unsigned int* returnValue,
                            const char* name,
                            const uint8_t* input,
-                           unsigned int input_size);
+                           unsigned int input_size,
+                           uint8_t* policy,
+                           uint32_t policy_len);
 
     extern sgx_status_t SGX_CDECL
     ocall_faasm_chain_ptr(unsigned int* returnValue,
                           const int wasmFuncPtr,
                           const uint8_t* input,
-                          unsigned int input_size);
+                          unsigned int input_size,
+                          uint8_t* policy,
+                          uint32_t policy_len);
 
     extern sgx_status_t SGX_CDECL
     ocall_faasm_await_call(unsigned int* returnValue, unsigned int callId);
 
     extern sgx_status_t SGX_CDECL
     ocall_faasm_await_call_output(unsigned int* returnValue,
-                                  unsigned int callId,
-                                  uint8_t* buffer,
-                                  unsigned int buffer_size);
+                                  unsigned int callId);
 
     // --------------------------------------
     // FAASM HOST INTERFACE
@@ -235,29 +244,7 @@ extern "C"
     // WHITELISTING
     // --------------------------------------
 
+#if (FAASM_SGX_WHITELISTING)
     void sgx_wamr_function_not_whitelisted_wrapper(wasm_exec_env_t exec_env);
-
-    // --------------------------------------
-    // WASI STUBS
-    // --------------------------------------
-
-    static int args_get_wrapper(wasm_exec_env_t exec_env, int a, int b);
-
-    static int args_sizes_get_wrapper(wasm_exec_env_t exec_env, int a, int b);
-
-    static int fd_close_wrapper(wasm_exec_env_t exec_env, int a);
-
-    static int fd_seek_wrapper(wasm_exec_env_t exec_env,
-                               int a,
-                               int64_t b,
-                               int c,
-                               int d);
-
-    static int fd_write_wrapper(wasm_exec_env_t exec_env,
-                                int a,
-                                int b,
-                                int c,
-                                int d);
-
-    static void proc_exit_wrapper(wasm_exec_env_t exec_env, int returnCode);
+#endif
 }

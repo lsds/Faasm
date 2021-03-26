@@ -13,7 +13,10 @@ RUN apt-get install -y \
     python3-venv \
     libcairo2-dev \
     python3-cairo \
-    vim
+    vim \
+    python3-graphviz \
+    python3-pycryptodome \
+    binaryen # for wasm-opt
 
 # Install wabt
 # TODO - pin this to a release

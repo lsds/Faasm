@@ -121,6 +121,14 @@ std::vector<uint8_t> FileserverFileLoader::loadFunctionWasm(
     return doLoad(urlPath, "", filePath);
 }
 
+std::vector<uint8_t> FileserverFileLoader::loadEncryptedFunctionWasm(
+  const faabric::Message& msg)
+{
+    std::string urlPath = fmt::format("f/{}/{}", msg.user(), msg.function());
+    std::string filePath = faabric::util::getEncryptedFunctionFile(msg);
+    return doLoad(urlPath, "", filePath);
+}
+
 std::vector<uint8_t> FileserverFileLoader::loadFunctionObjectFile(
   const faabric::Message& msg)
 {
