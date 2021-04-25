@@ -164,13 +164,6 @@ void LocalFileLoader::uploadSharedObjectObjectFile(
     faabric::util::writeBytesToFile(outputPath, objBytes);
 }
 
-void LocalFileLoader::uploadSharedObjectAotFile(
-  const std::string& path,
-  const std::vector<uint8_t>& objBytes)
-{
-    throw std::runtime_error("Not yet implemented WAMR shared objects");
-}
-
 void LocalFileLoader::uploadSharedFile(const std::string& path,
                                        const std::vector<uint8_t>& objBytes)
 {
@@ -213,12 +206,5 @@ void LocalFileLoader::uploadSharedObjectObjectHash(
 {
     std::string outputPath = faabric::util::getSharedObjectObjectFile(path);
     writeHashForFile(outputPath, hash);
-}
-
-void LocalFileLoader::uploadSharedObjectAotHash(
-  const std::string& path,
-  const std::vector<uint8_t>& hash)
-{
-    throw std::runtime_error("Not yet implemented WAMR shared objects");
 }
 }

@@ -8,13 +8,12 @@
 #include <faabric/util/func.h>
 #include <faabric/util/logging.h>
 
+#include <boost/filesystem.hpp>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
 #include <cpprest/json.h>
 #include <cpprest/uri.h>
 #include <iostream>
-
-#include <boost/filesystem.hpp>
 
 using namespace utility;
 using namespace web;
@@ -129,13 +128,6 @@ std::vector<uint8_t> FileserverFileLoader::loadFunctionObjectFile(
     return doLoad(urlPath, "", objectFilePath);
 }
 
-std::vector<uint8_t> FileserverFileLoader::loadFunctionWamrAotFile(
-  const faabric::Message& msg)
-{
-    throw std::runtime_error(
-      "Not yet implemented WAMR AOT file loading from fileserver");
-}
-
 std::vector<uint8_t> FileserverFileLoader::loadSharedObjectObjectFile(
   const std::string& path)
 {
@@ -172,49 +164,4 @@ void FileserverFileLoader::flushFunctionFiles()
     // Nuke the machine code directory
     boost::filesystem::remove_all(conf.objectFileDir);
 }
-
-// --------------------------------------------------------
-// TODO: implement hashing and hash storage in fileserver mode
-// --------------------------------------------------------
-std::vector<uint8_t> FileserverFileLoader::loadFunctionObjectHash(
-  const faabric::Message& msg)
-{
-    std::vector<uint8_t> empty;
-    return empty;
-}
-
-std::vector<uint8_t> FileserverFileLoader::loadFunctionWamrAotHash(
-  const faabric::Message& msg)
-{
-    std::vector<uint8_t> empty;
-    return empty;
-}
-
-std::vector<uint8_t> FileserverFileLoader::loadSharedObjectObjectHash(
-  const std::string& path)
-{
-    std::vector<uint8_t> empty;
-    return empty;
-}
-
-void FileserverFileLoader::uploadFunctionObjectHash(
-  const faabric::Message& msg,
-  const std::vector<uint8_t>& hash)
-{}
-
-void FileserverFileLoader::uploadFunctionWamrAotHash(
-  const faabric::Message& msg,
-  const std::vector<uint8_t>& hash)
-{}
-
-void FileserverFileLoader::uploadSharedObjectObjectHash(
-  const std::string& path,
-  const std::vector<uint8_t>& hash)
-{}
-
-void FileserverFileLoader::uploadSharedObjectAotHash(
-  const std::string& path,
-  const std::vector<uint8_t>& hash)
-{}
-
 }

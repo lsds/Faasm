@@ -4,7 +4,7 @@
 #include <faabric/util/config.h>
 
 namespace storage {
-class LocalFileLoader : public FileLoader
+class LocalFileLoader final : public FileLoader
 {
   public:
     std::vector<uint8_t> loadFunctionWasm(const faabric::Message& msg) override;
@@ -41,9 +41,6 @@ class LocalFileLoader : public FileLoader
       const std::string& path,
       const std::vector<uint8_t>& hash) override;
 
-    void uploadSharedObjectAotHash(const std::string& path,
-                                   const std::vector<uint8_t>& hash) override;
-
     void uploadFunction(faabric::Message& msg) override;
 
     void uploadPythonFunction(faabric::Message& msg) override;
@@ -56,10 +53,6 @@ class LocalFileLoader : public FileLoader
                                const std::vector<uint8_t>& objBytes) override;
 
     void uploadSharedObjectObjectFile(
-      const std::string& path,
-      const std::vector<uint8_t>& objBytes) override;
-
-    void uploadSharedObjectAotFile(
       const std::string& path,
       const std::vector<uint8_t>& objBytes) override;
 

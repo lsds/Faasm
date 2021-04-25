@@ -146,4 +146,130 @@ std::vector<uint8_t> loadFileBytes(const std::string& path)
     checkFileExists(path);
     return faabric::util::readFileToBytes(path);
 }
+
+// -----------------------------------------------------
+// Subclass overrides
+// -----------------------------------------------------
+
+std::vector<uint8_t> FileLoader::loadFunctionWasm(const faabric::Message& msg)
+{
+    throw std::runtime_error("loadFunctionWasm not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadSharedObjectWasm(const std::string& path)
+{
+    throw std::runtime_error("loadSharedObjectWasm not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadFunctionObjectFile(
+  const faabric::Message& msg)
+{
+    throw std::runtime_error("loadFunctionObjectFile not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadFunctionWamrAotFile(
+  const faabric::Message& msg)
+{
+    throw std::runtime_error("loadFunctionWamrAotFile not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadSharedObjectObjectFile(
+  const std::string& path)
+{
+    throw std::runtime_error("loadSharedObjectObjectFile not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadSharedFile(const std::string& path)
+{
+    throw std::runtime_error("loadSharedFile not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadFunctionObjectHash(
+  const faabric::Message& msg)
+{
+    throw std::runtime_error("loadFunctionObjectHash not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadFunctionWamrAotHash(
+  const faabric::Message& msg)
+{
+    throw std::runtime_error("loadFunctionWamrAotHash not implemented");
+}
+
+std::vector<uint8_t> FileLoader::loadSharedObjectObjectHash(
+  const std::string& path)
+{
+    throw std::runtime_error("loadSharedObjectObjectHash not implemented");
+}
+
+void FileLoader::uploadFunctionObjectHash(const faabric::Message& msg,
+                                          const std::vector<uint8_t>& hash)
+{
+    throw std::runtime_error("uploadFunctionObjectHash not implemented");
+}
+
+void FileLoader::uploadFunctionWamrAotHash(const faabric::Message& msg,
+                                           const std::vector<uint8_t>& hash)
+{
+    throw std::runtime_error("uploadFunctionWamrAotHash not implemented");
+}
+
+void FileLoader::uploadSharedObjectObjectHash(const std::string& path,
+                                              const std::vector<uint8_t>& hash)
+{
+    throw std::runtime_error("uploadSharedObjectObjectHash not implemented");
+}
+
+void FileLoader::uploadSharedObjectAotHash(const std::string& path,
+                                           const std::vector<uint8_t>& hash)
+{
+    throw std::runtime_error("uploadSharedObjectAotHash not implemented");
+}
+
+void FileLoader::uploadFunction(faabric::Message& msg)
+{
+    throw std::runtime_error("uploadFunction not implemented");
+}
+
+void FileLoader::uploadPythonFunction(faabric::Message& msg)
+{
+    throw std::runtime_error("uploadPythonFunction not implemented");
+}
+
+void FileLoader::uploadFunctionObjectFile(const faabric::Message& msg,
+                                          const std::vector<uint8_t>& objBytes)
+{
+    throw std::runtime_error("uploadFunctionObjectFile not implemented");
+}
+
+void FileLoader::uploadFunctionAotFile(const faabric::Message& msg,
+                                       const std::vector<uint8_t>& objBytes)
+{
+    throw std::runtime_error("uploadFunctionAotFile not implemented");
+}
+
+void FileLoader::uploadSharedObjectObjectFile(
+  const std::string& path,
+  const std::vector<uint8_t>& objBytes)
+{
+    throw std::runtime_error("uploadSharedObjectObjectFile not implemented");
+}
+
+void FileLoader::uploadSharedObjectAotFile(const std::string& path,
+                                           const std::vector<uint8_t>& objBytes)
+{
+    throw std::runtime_error("uplaodSharedObjectAotFile not implemented");
+}
+
+void FileLoader::uploadSharedFile(const std::string& path,
+                                  const std::vector<uint8_t>& fileBytes)
+{
+    throw std::runtime_error("uploadSharedFile not implemented");
+}
+
+void FileLoader::flushFunctionFiles()
+{
+    throw std::runtime_error("flushFunctionFiles not implemented");
+}
+
 }

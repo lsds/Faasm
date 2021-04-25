@@ -17,70 +17,70 @@ class FileLoader
 {
   public:
     virtual std::vector<uint8_t> loadFunctionWasm(
-      const faabric::Message& msg) = 0;
+      const faabric::Message& msg);
 
     virtual std::vector<uint8_t> loadSharedObjectWasm(
-      const std::string& path) = 0;
+      const std::string& path);
 
     virtual std::vector<uint8_t> loadFunctionObjectFile(
-      const faabric::Message& msg) = 0;
+      const faabric::Message& msg);
 
     virtual std::vector<uint8_t> loadFunctionWamrAotFile(
-      const faabric::Message& msg) = 0;
+      const faabric::Message& msg);
 
     virtual std::vector<uint8_t> loadSharedObjectObjectFile(
-      const std::string& path) = 0;
+      const std::string& path);
 
-    virtual std::vector<uint8_t> loadSharedFile(const std::string& path) = 0;
+    virtual std::vector<uint8_t> loadSharedFile(const std::string& path);
 
     virtual std::vector<uint8_t> loadFunctionObjectHash(
-      const faabric::Message& msg) = 0;
+      const faabric::Message& msg);
 
     virtual std::vector<uint8_t> loadFunctionWamrAotHash(
-      const faabric::Message& msg) = 0;
+      const faabric::Message& msg);
 
     virtual std::vector<uint8_t> loadSharedObjectObjectHash(
-      const std::string& path) = 0;
+      const std::string& path);
 
     virtual void uploadFunctionObjectHash(const faabric::Message& msg,
-                                          const std::vector<uint8_t>& hash) = 0;
+                                          const std::vector<uint8_t>& hash);
 
     virtual void uploadFunctionWamrAotHash(
       const faabric::Message& msg,
-      const std::vector<uint8_t>& hash) = 0;
+      const std::vector<uint8_t>& hash);
 
     virtual void uploadSharedObjectObjectHash(
       const std::string& path,
-      const std::vector<uint8_t>& hash) = 0;
+      const std::vector<uint8_t>& hash);
 
     virtual void uploadSharedObjectAotHash(
       const std::string& path,
-      const std::vector<uint8_t>& hash) = 0;
+      const std::vector<uint8_t>& hash);
 
-    virtual void uploadFunction(faabric::Message& msg) = 0;
+    virtual void uploadFunction(faabric::Message& msg);
 
-    virtual void uploadPythonFunction(faabric::Message& msg) = 0;
+    virtual void uploadPythonFunction(faabric::Message& msg);
 
     virtual void uploadFunctionObjectFile(
       const faabric::Message& msg,
-      const std::vector<uint8_t>& objBytes) = 0;
+      const std::vector<uint8_t>& objBytes);
 
     virtual void uploadFunctionAotFile(
       const faabric::Message& msg,
-      const std::vector<uint8_t>& objBytes) = 0;
+      const std::vector<uint8_t>& objBytes);
 
     virtual void uploadSharedObjectObjectFile(
       const std::string& path,
-      const std::vector<uint8_t>& objBytes) = 0;
+      const std::vector<uint8_t>& objBytes);
 
     virtual void uploadSharedObjectAotFile(
       const std::string& path,
-      const std::vector<uint8_t>& objBytes) = 0;
+      const std::vector<uint8_t>& objBytes);
 
     virtual void uploadSharedFile(const std::string& path,
-                                  const std::vector<uint8_t>& fileBytes) = 0;
+                                  const std::vector<uint8_t>& fileBytes);
 
-    virtual void flushFunctionFiles() = 0;
+    virtual void flushFunctionFiles();
 
     void codegenForFunction(faabric::Message& msg);
 
