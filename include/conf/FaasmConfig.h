@@ -25,6 +25,7 @@ class FaasmConfig
     std::string runtimeFilesDir;
     std::string sharedFilesDir;
     std::string sharedFilesStorageDir;
+    std::string bucketName;
 
     FaasmConfig();
     void reset();

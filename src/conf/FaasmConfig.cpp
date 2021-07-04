@@ -38,6 +38,8 @@ void FaasmConfig::initialise()
     runtimeFilesDir = fmt::format("{}/{}", faasmLocalDir, "runtime_root");
     sharedFilesDir = fmt::format("{}/{}", faasmLocalDir, "shared");
     sharedFilesStorageDir = fmt::format("{}/{}", faasmLocalDir, "shared_store");
+
+    bucketName = getEnvVar("BUCKET_NAME", "faasm");
 }
 
 int FaasmConfig::getIntParam(const char* name, const char* defaultValue)

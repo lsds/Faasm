@@ -49,6 +49,25 @@ ExternalProject_Add(eigen_ext
     CMAKE_CACHE_ARGS "-DCMAKE_INSTALL_PREFIX:STRING=${CMAKE_INSTALL_PREFIX}"
 )
 
+# AWS docs on using as an external project:
+# https://github.com/aws/aws-sdk-cpp/blob/main/Docs/CMake_External_Project.md
+# If you need to build multiple AWS components, see this issue:
+# https://github.com/aws/aws-sdk-cpp/issues/826
+ExternalProject_Add(aws_ext
+    GIT_REPOSITORY   "https://github.com/aws/aws-sdk-cpp.git"
+    GIT_TAG          "b733384b16945818fa5da5b73e410dea1e9ab9d0"
+    BUILD_ALWAYS     0
+    TEST_COMMAND     ""
+    UPDATE_COMMAND   ""
+    CMAKE_CACHE_ARGS "-DCMAKE_INSTALL_PREFIX:STRING=${CMAKE_INSTALL_PREFIX}"
+    LIST_SEPARATOR    "|"
+    CMAKE_ARGS       -DBUILD_SHARED_LIBS=OFF
+                     -DBUILD_ONLY=s3|sts
+                     -DAUTORUN_UNIT_TESTS=OFF
+                     -DENABLE_TESTING=OFF
+                     -DCMAKE_BUILD_TYPE=Release
+)
+
 ExternalProject_Add(catch2_ext
      GIT_REPOSITORY "https://github.com/catchorg/Catch2"
      GIT_TAG "v2.13.2"
@@ -56,4 +75,4 @@ ExternalProject_Add(catch2_ext
          -DCATCH_INSTALL_EXTRAS=OFF"
      CMAKE_CACHE_ARGS "-DCMAKE_INSTALL_PREFIX:STRING=${CMAKE_INSTALL_PREFIX}"
 )
- 
+

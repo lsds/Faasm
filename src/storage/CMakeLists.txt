@@ -11,14 +11,23 @@ set(LIB_FILES
         FileSystem.cpp
         FileserverFileLoader.cpp
         LocalFileLoader.cpp
+        S3FileLoader.cpp
+        S3Wrapper.cpp
         SharedFiles.cpp
         instance.cpp
         ${HEADERS}
         )
 
 faasm_private_lib(storage "${LIB_FILES}")
-target_link_libraries(storage 
-    wavmmodule 
+add_dependencies(storage aws_ext)
+
+find_package(aws-cpp-sdk-core)
+find_package(aws-cpp-sdk-s3)
+
+target_link_libraries(storage
+    wavmmodule
     wamrmodule
     cpprestsdk::cpprest
+    aws-cpp-sdk-core
+    aws-cpp-sdk-s3
 )
