@@ -2,7 +2,7 @@
 #                        WARNING
 #
 # Before modifying please read /docs/sgx.md
-# This file contains many low level settings 
+# This file contains many low level settings
 # --------------------------------------------------------
 
 # NASM configuration
@@ -13,9 +13,9 @@ set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> <INCLUDES> ${CMAKE_
 # FAASM-SGX enclave configuration
 set(FAASM_SGX_ENCLAVE_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/faasm_sgx_enclave.sign.so")
 
-# Enable(1)/ Disable(0) SGX-specific debug/error messages 
+# Enable(1)/ Disable(0) SGX-specific debug/error messages
 # Disable for better performance
-set(FAASM_SGX_DEBUG 1) 
+set(FAASM_SGX_DEBUG 1)
 
 # SGX configuration
 set(SGX_DEBUG_MODE 1)
@@ -35,7 +35,7 @@ set(SGX_SDK_ENCLAVE_EDGER8R ${SGX_SDK_PATH}/bin/x64/sgx_edger8r)
 
 # --------------------------------------------------------
 # WAMR Build
-# 
+#
 # 28/06/2021 - To build WAMR inside SGX, we follow the provided example:
 # https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/product-mini/platforms/linux-sgx/CMakeLists.txt
 # --------------------------------------------------------
@@ -63,13 +63,18 @@ set(FAASM_SGX_WAMR_SRC_UNTRUSTED
         )
 
 # --------------------------------------------------------
+# Crypto submodule
+# --------------------------------------------------------
+add_subdirectory(crypto)
+
+# --------------------------------------------------------
 # Attestation configuration
 # --------------------------------------------------------
 
 if (FAASM_SGX_ATTESTATION)
     # IP-address or hostname is possible to specify host
     add_definitions(
-            -DFAASM_SGX_ATTESTATION_HOST="localhost" 
+            -DFAASM_SGX_ATTESTATION_HOST="localhost"
             -DFAASM_SGX_ATTESTATION_PORT=8009
             -DFAASM_SGX_ATTESTATION_CALLBACK_STORE_INIT_LEN=4
     )

@@ -20,7 +20,7 @@
 #define WASM_CTORS_FUNC_NAME "__wasm_call_ctors"
 #define WASM_ENTRY_FUNC "_start"
 
-// Omplementation of the exposed Ecalls API. The code in this file is meant to
+// Implementation of the exposed Ecalls API. The code in this file is meant to
 // run _inside_ the enclave, thus is the only bit of code that actually
 // interacts with the WAMR runtime.
 extern "C"
