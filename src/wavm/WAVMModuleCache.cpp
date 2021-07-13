@@ -37,8 +37,7 @@ wasm::WAVMWasmModule& WAVMModuleCache::getCachedModule(faabric::Message& msg)
         // Re-check condition
         if (cachedModuleMap.find(key) == cachedModuleMap.end()) {
 
-            SPDLOG_DEBUG(
-              "WAVM module cache initialising {} (tid {})", key, gettid());
+            SPDLOG_DEBUG("WAVM module cache initialising {}", key);
 
             // Instantiate the base module
             wasm::WAVMWasmModule& module = cachedModuleMap[key];

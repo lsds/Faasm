@@ -31,15 +31,28 @@ TEST_CASE("Check level serialisation and deserialisation", "[threads]")
     lvlA.setSharedVarOffsets(sharedVarOffsets.data(), sharedVarOffsets.size());
     REQUIRE(lvlA.getSharedVarOffsets() == sharedVarOffsets);
 
-    // Make sure we serialise via the relevant protobuf object to test the round
-    // trip
+    // Serialise and check size
     std::vector<uint8_t> serialised = lvlA.serialise();
+    size_t expectedSize =
+      sizeof(Level) + (sharedVarOffsets.size() * sizeof(uint32_t));
+    REQUIRE(serialised.size() == expectedSize);
+
+    // Serialise via the relevant protobuf object to test the round trip
     std::shared_ptr<faabric::BatchExecuteRequest> req =
       faabric::util::batchExecFactory("demo", "echo", 1);
     req->set_contextdata(serialised.data(), serialised.size());
 
-    // Deliberately don't set right number of threads
-    std::shared_ptr<Level> lvlB = levelFromBatchRequest(req);
+    // Serialise and deserialise the protobuf object
+    size_t bufferSize = req->ByteSizeLong();
+    uint8_t buffer[bufferSize];
+    req->SerializeToArray(buffer, bufferSize);
+
+    auto reqB = std::make_shared<faabric::BatchExecuteRequest>();
+    reqB->ParseFromArray(buffer, bufferSize);
+    REQUIRE(reqB->contextdata().size() == expectedSize);
+
+    // Deserialise the nested level object
+    std::shared_ptr<Level> lvlB = levelFromBatchRequest(reqB);
 
     REQUIRE(lvlB->id == lvlA.id);
     REQUIRE(lvlB->activeLevels == lvlA.activeLevels);
@@ -51,6 +64,24 @@ TEST_CASE("Check level serialisation and deserialisation", "[threads]")
     REQUIRE(lvlB->wantedThreads == lvlA.wantedThreads);
 
     REQUIRE(lvlB->getSharedVarOffsets() == sharedVarOffsets);
+}
+
+TEST_CASE("Check level serialisation sizes", "[threads]")
+{
+    Level lvlA(10);
+    REQUIRE(lvlA.id != 0);
+
+    std::vector<uint32_t> sharedVarOffsets = { 22, 33, 44 };
+    lvlA.setSharedVarOffsets(sharedVarOffsets.data(), sharedVarOffsets.size());
+
+    Level lvlB(5);
+    REQUIRE(lvlB.id != 0);
+
+    std::vector<uint8_t> serialisedA = lvlA.serialise();
+    std::vector<uint8_t> serialisedB = lvlB.serialise();
+
+    size_t sizeDiff = serialisedA.size() - serialisedB.size();
+    REQUIRE(sizeDiff == sharedVarOffsets.size() * sizeof(uint32_t));
 }
 
 TEST_CASE("Test level locking", "[threads]")

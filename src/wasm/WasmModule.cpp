@@ -125,12 +125,14 @@ void WasmModule::restore(const std::string& snapshotKey)
     uint32_t memSize = getCurrentBrk();
 
     if (data.size > memSize) {
-        SPDLOG_DEBUG("Growing memory to fit snapshot");
         size_t bytesRequired = data.size - memSize;
+        SPDLOG_DEBUG("Growing memory by {} bytes to restore snapshot",
+                     bytesRequired);
         this->growMemory(bytesRequired);
     } else {
-        SPDLOG_DEBUG("Shrinking memory to fit snapshot");
         size_t shrinkBy = memSize - data.size;
+        SPDLOG_DEBUG("Shrinking memory by {} bytes to restore snapshot",
+                     shrinkBy);
         this->shrinkMemory(shrinkBy);
     }
 
@@ -325,6 +327,7 @@ int32_t WasmModule::executeTask(
   std::shared_ptr<faabric::BatchExecuteRequest> req)
 {
     faabric::Message& msg = req->mutable_messages()->at(msgIdx);
+    std::string funcStr = faabric::util::funcToString(msg, true);
 
     if (!isBound()) {
         throw std::runtime_error(
@@ -344,17 +347,28 @@ int32_t WasmModule::executeTask(
     // Perform the appropriate type of execution
     int returnValue;
     if (req->type() == faabric::BatchExecuteRequest::THREADS) {
-        // Pthreads or openmp
-        if (req->subtype() == ThreadRequestType::PTHREAD) {
-            returnValue = executePthread(threadPoolIdx, stackTop, msg);
-        } else if (req->subtype() == ThreadRequestType::OPENMP) {
-            threads::setCurrentOpenMPLevel(req);
-            returnValue = executeOMPThread(threadPoolIdx, stackTop, msg);
-        } else {
-            throw std::runtime_error("Unrecognised thread type");
+        switch (req->subtype()) {
+            case ThreadRequestType::PTHREAD: {
+                SPDLOG_TRACE("Executing {} as pthread", funcStr);
+                returnValue = executePthread(threadPoolIdx, stackTop, msg);
+                break;
+            }
+            case ThreadRequestType::OPENMP: {
+                SPDLOG_TRACE("Executing {} as OpenMP", funcStr);
+                threads::setCurrentOpenMPLevel(req);
+                returnValue = executeOMPThread(threadPoolIdx, stackTop, msg);
+                break;
+            }
+            default: {
+                SPDLOG_ERROR("{} has unrecognised thread subtype {}",
+                             funcStr,
+                             req->subtype());
+                throw std::runtime_error("Unrecognised thread subtype");
+            }
         }
     } else {
         // Vanilla function
+        SPDLOG_TRACE("Executing {} as standard function", funcStr);
         returnValue = executeFunction(msg);
     }
 

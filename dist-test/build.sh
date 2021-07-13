@@ -14,6 +14,7 @@ fi
 # Run the build
 docker-compose \
     run \
+    --rm \
     builder \
     /usr/local/code/faasm/dist-test/build_internal.sh
 

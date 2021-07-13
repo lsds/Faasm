@@ -408,9 +408,9 @@ WAVM_DEFINE_INTRINSIC_FUNCTION(env,
     // Prepare arguments for main thread and all others
     std::vector<IR::UntaggedValue> mainArguments = { 0, argc };
     if (argc > 0) {
-        // Build list of pointers to shared variables
-        U32* sharedVarsPtr =
-          Runtime::memoryArrayPtr<U32>(memoryPtr, argsPtr, argc);
+        // Build list of offsets to shared variables
+        uint32_t* sharedVarsPtr =
+          Runtime::memoryArrayPtr<uint32_t>(memoryPtr, argsPtr, argc);
         nextLevel->setSharedVarOffsets(sharedVarsPtr, argc);
 
         // Append to main arguments
@@ -432,6 +432,8 @@ WAVM_DEFINE_INTRINSIC_FUNCTION(env,
         // Add remote context
         // TODO - avoid copy
         std::vector<uint8_t> serialisedLevel = nextLevel->serialise();
+        SPDLOG_TRACE("Serialised OpenMP level to {} bytes",
+                     serialisedLevel.size());
         req->set_contextdata(serialisedLevel.data(), serialisedLevel.size());
 
         // Configure the mesages
@@ -465,7 +467,6 @@ WAVM_DEFINE_INTRINSIC_FUNCTION(env,
 
         // Set up the context for the next level
         threads::setCurrentOpenMPLevel(nextLevel);
-
         {
             wasm::WasmExecutionContext ctx(parentModule, &masterMsg);
 

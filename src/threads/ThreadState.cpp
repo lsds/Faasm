@@ -1,5 +1,7 @@
+#include <faabric/util/bytes.h>
 #include <faabric/scheduler/Scheduler.h>
 #include <faabric/util/config.h>
+#include <faabric/util/func.h>
 #include <faabric/util/gids.h>
 #include <faabric/util/latch.h>
 #include <faabric/util/locks.h>
@@ -58,10 +60,20 @@ void setCurrentOpenMPLevel(
   const std::shared_ptr<faabric::BatchExecuteRequest> req)
 {
     if (req->contextdata().empty()) {
+        SPDLOG_ERROR("Empty OpenMP context for {}", req->id());
         throw std::runtime_error("Empty context for OpenMP request");
     }
 
+    std::string funcStr = faabric::util::funcToString(req);
+    SPDLOG_TRACE("Deserialising OpenMP level with {} bytes from {}",
+                 req->contextdata().size(),
+                 funcStr);
+
     currentLevel = levelFromBatchRequest(req);
+    SPDLOG_TRACE("Set OpenMP level depth {} with {} threads for {}",
+                 currentLevel->depth,
+                 currentLevel->numThreads,
+                 funcStr);
 }
 
 std::shared_ptr<Level> getCurrentOpenMPLevel()
@@ -79,12 +91,7 @@ std::shared_ptr<Level> getCurrentOpenMPLevel()
 std::shared_ptr<Level> levelFromBatchRequest(
   const std::shared_ptr<faabric::BatchExecuteRequest>& req)
 {
-    const auto other =
-      reinterpret_cast<const Level*>(req->contextdata().data());
-    auto lvl = std::make_shared<Level>(other->numThreads);
-    lvl->deserialise(other);
-
-    return lvl;
+    return Level::deserialise(faabric::util::stringToBytes(req->contextdata()));
 }
 
 Level::Level(int numThreadsIn)
@@ -178,28 +185,41 @@ std::vector<uint8_t> Level::serialise()
     size_t thisSize = sizeof(Level);
     thisSize += nSharedVarOffsets * sizeof(uint32_t);
 
+    std::vector<uint8_t> bytes(thisSize, 0);
+
+    // Copy the level without the shared offsets (relying on the C++ class
+    // memory layout placing members at the top
     uint8_t* bytesPtr = BYTES(this);
-    std::vector<uint8_t> bytes(bytesPtr, bytesPtr + thisSize);
+    std::memcpy(bytes.data(), bytesPtr, sizeof(Level));
+
+    // Copy the shared offsets
+    if (nSharedVarOffsets > 0) {
+        std::memcpy(bytes.data() + sizeof(Level),
+                    sharedVarOffsets,
+                    nSharedVarOffsets * sizeof(uint32_t));
+    }
+
     return bytes;
 }
 
-void Level::deserialise(const Level* other)
+std::shared_ptr<Level> Level::deserialise(const std::vector<uint8_t>& bytes)
 {
-    id = other->id;
-    depth = other->depth;
-    activeLevels = other->activeLevels;
-    maxActiveLevels = other->maxActiveLevels;
-    numThreads = other->numThreads;
-    pushedThreads = other->pushedThreads;
-    wantedThreads = other->wantedThreads;
+    // Copy the top section of bytes into a new instance (relying on the
+    // C++ class memory layout placing members at the top)
+    std::shared_ptr<Level> result = std::make_shared<Level>(0);
+    std::memcpy(result.get(), bytes.data(), sizeof(Level));
 
-    globalTidOffset = other->globalTidOffset;
+    // Copy in shared offsets if necessary
+    if (result->nSharedVarOffsets > 0) {
+        result->sharedVarOffsets = new uint32_t[result->nSharedVarOffsets];
+        std::memcpy(result->sharedVarOffsets,
+                    bytes.data() + sizeof(Level),
+                    result->nSharedVarOffsets * sizeof(uint32_t));
+    } else {
+        result->sharedVarOffsets = nullptr;
+    }
 
-    nSharedVarOffsets = other->nSharedVarOffsets;
-    sharedVarOffsets = new uint32_t[nSharedVarOffsets];
-    std::memcpy(sharedVarOffsets,
-                other->sharedVarOffsets,
-                nSharedVarOffsets * sizeof(uint32_t));
+    return result;
 }
 
 void Level::waitOnBarrier()

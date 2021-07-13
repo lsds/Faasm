@@ -4,7 +4,7 @@
 #include <faabric/proto/faabric.pb.h>
 #include <faabric/runner/FaabricMain.h>
 #include <faabric/scheduler/FunctionCallClient.h>
-#include <faabric/scheduler/SnapshotClient.h>
+#include <faabric/snapshot/SnapshotClient.h>
 #include <faabric/snapshot/SnapshotRegistry.h>
 #include <faabric/util/bytes.h>
 #include <faabric/util/config.h>
